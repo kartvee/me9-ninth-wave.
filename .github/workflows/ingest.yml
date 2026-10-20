@@ -10,19 +10,39 @@ on:
       - ".github/workflows/ingest.yml"
 permissions:
   contents: write
+concurrency:
+  group: me9-ingestion
+  cancel-in-progress: false
 jobs:
   ingest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Fetch public RSS feeds and deduplicate
         run: python scripts/ingest.py
-      - name: Commit refreshed dataset
+      - name: Commit and safely push refreshed dataset
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/news.json
-          git diff --cached --quiet || (git commit -m "chore: refresh ME9 news feed" && git push)
+          if git diff --cached --quiet; then
+            echo "Dataset unchanged."
+            exit 0
+          fi
+          git commit -m "chore: refresh ME9 news feed"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; retrying."
+            sleep 2
+          done
+          echo "Could not push after three attempts."
+          exit 1
