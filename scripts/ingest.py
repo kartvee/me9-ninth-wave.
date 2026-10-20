@@ -26,7 +26,15 @@ FEEDS=[
 ("Interpressnews (Google News feed)","https://news.google.com/rss/search?q=site%3Aipn.ge&hl=en-US&gl=GE&ceid=GE:en"),
 ("Netgazeti","https://netgazeti.ge/feed/"),
 ("Radio Tavisupleba (Georgian RFE/RL)","https://www.radiotavisupleba.ge/api/z-pqpiev-qpp"),
+("Armenia (Google News feed)","https://news.google.com/rss/search?q=Armenia+OR+Yerevan&hl=en-US&gl=US&ceid=US:en"),
+("Azerbaijan (Google News feed)","https://news.google.com/rss/search?q=Azerbaijan+OR+Baku+OR+Karabakh&hl=en-US&gl=US&ceid=US:en"),
 ("Turan (Google News feed)","https://news.google.com/rss/search?q=site%3Aturan.az&hl=en-US&gl=AZ&ceid=AZ:en"),
+# Country-level discovery feeds complement individual publishers and improve smaller-country coverage.
+("Kazakhstan (Google News feed)","https://news.google.com/rss/search?q=Kazakhstan+OR+Astana+OR+Almaty&hl=en-US&gl=US&ceid=US:en"),
+("Kyrgyzstan (Google News feed)","https://news.google.com/rss/search?q=Kyrgyzstan+OR+Bishkek&hl=en-US&gl=US&ceid=US:en"),
+("Tajikistan (Google News feed)","https://news.google.com/rss/search?q=Tajikistan+OR+Dushanbe&hl=en-US&gl=US&ceid=US:en"),
+("Turkmenistan (Google News feed)","https://news.google.com/rss/search?q=Turkmenistan+OR+Ashgabat&hl=en-US&gl=US&ceid=US:en"),
+("Uzbekistan (Google News feed)","https://news.google.com/rss/search?q=Uzbekistan+OR+Tashkent&hl=en-US&gl=US&ceid=US:en"),
 # Central Asia
 ("Asia-Plus","https://asiaplustj.info/en/feed"),
 ("Avesta","https://avesta.tj/feed/"),
@@ -49,9 +57,21 @@ def clean(s):
 def parse_date(s):
     try:return parsedate_to_datetime(s).astimezone(timezone.utc).isoformat()
     except Exception:return datetime.now(timezone.utc).isoformat()
-def classify(text):
+def classify(text, source=""):
     low=text.lower()
-    country=next((c for c,terms in COUNTRIES.items() if any(t in low for t in terms)),"Regional")
+    source_low=source.lower()
+    source_country={
+        "agenda.ge":"Georgia","civil georgia":"Georgia","interpressnews":"Georgia",
+        "netgazeti":"Georgia","radio tavisupleba":"Georgia",
+        "asia-plus":"Tajikistan","avesta":"Tajikistan","faraj":"Tajikistan",
+        "24.kg":"Kyrgyzstan","kaktus media":"Kyrgyzstan","kyrtag":"Kyrgyzstan",
+        "kun.uz":"Uzbekistan","xabar.uz":"Uzbekistan","uzdaily":"Uzbekistan",
+        "turkmen.news":"Turkmenistan","turan":"Azerbaijan",
+        "mediazona":"Russia","taiga.info":"Russia","fortanga":"Russia"
+    }
+    country=next((c for hint,c in source_country.items() if hint in source_low),None)
+    if not country:
+        country=next((c for c,terms in COUNTRIES.items() if any(t in low for t in terms)),"Regional")
     topic=next((c for c,terms in TOPICS.items() if any(t in low for t in terms)),"Politics")
     return country,topic
 def first_text(node,names):
@@ -104,7 +124,7 @@ for source,url in FEEDS:
         with urllib.request.urlopen(req,timeout=18) as response:root=ET.fromstring(response.read())
         nodes=root.findall(".//item") or root.findall(".//{http://www.w3.org/2005/Atom}entry")
         feed_ok+=1
-        for node in nodes[:12]:
+        for node in nodes:
             title=clean(first_text(node,["title","{http://www.w3.org/2005/Atom}title"]))
             link=first_text(node,["link"])
             if not link:
@@ -115,7 +135,7 @@ for source,url in FEEDS:
             if source=="CNN World" and any(x in link.lower() for x in ["lendingtree.com","fool.com","credit-card","cashoutoptions"]):continue
             key=hashlib.sha256(re.sub(r"[^a-z0-9]","",title.lower()).encode()).hexdigest()
             if key in seen:continue
-            seen.add(key);country,topic=classify(title+" "+excerpt)
+            seen.add(key);country,topic=classify(title+" "+excerpt,source)
             # Keep Georgian headlines in Georgian and add their English translation.
             # For all other non-English headlines, publish the English translation only.
             translated_title=""
@@ -133,7 +153,7 @@ for source,url in FEEDS:
             items.append(article)
     except Exception as e:print("Feed failed:",source,str(e)[:200])
 items.sort(key=lambda x:x["published_at"],reverse=True)
-out={"status":"live" if items else "demo","updated_at":datetime.now(timezone.utc).isoformat(),"source_count":len(FEEDS),"active_source_count":feed_ok,"ai_enabled":bool(os.environ.get("ME9_OPENAI_API_KEY")),"articles":items[:180]}
+out={"status":"live" if items else "demo","updated_at":datetime.now(timezone.utc).isoformat(),"source_count":len(FEEDS),"active_source_count":feed_ok,"ai_enabled":bool(os.environ.get("ME9_OPENAI_API_KEY")),"articles":items}
 os.makedirs("data",exist_ok=True)
 with open("data/news.json","w",encoding="utf-8") as f:json.dump(out,f,ensure_ascii=False,indent=2)
 print("Collected",len(out["articles"]),"articles;",feed_ok,"feeds responded; AI enrichment",out["ai_enabled"])
