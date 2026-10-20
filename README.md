@@ -1,19 +1,17 @@
 # ME9 — Ninth Wave
 
-English-language regional geopolitical news monitoring for the South Caucasus, Central Asia, Russia and Eastern Europe.
+A responsive Reuters/POLITICO-inspired regional news monitor for the South Caucasus, Central Asia, Russia and Eastern Europe.
 
-## Included
-- Responsive editorial homepage with search and country/topic filters.
-- Publisher-attributed headlines, short excerpts, publication timestamps and original links.
-- RSS ingestion script with headline deduplication and basic country/topic classification.
-- GitHub Actions workflow scheduled every 30 minutes.
-- A transparent preview state when live ingestion has not yet populated the dataset.
+## Implemented in the current build
+- Breaking-first editorial homepage with responsive story cards and publisher images when exposed in RSS.
+- Search and country, topic, and publisher filters.
+- Interactive schematic country selector, chronological timeline, and related-coverage comparison.
+- Original headlines, publisher excerpts, source attribution, timestamps and original article links.
+- RSS ingestion with deduplication, basic classification, optional image extraction, and optional AI-generated English summaries/translations.
+- GitHub Actions ingestion schedule every 30 minutes and Pages deployment workflow.
 
-## First-time setup
-1. Enable GitHub Actions in repository settings.
-2. Run the ME9 news ingestion workflow manually once; check its logs and generated data/news.json.
-3. Enable GitHub Pages under Settings → Pages, selecting GitHub Actions as the publishing source.
-4. Check the Actions tab for the first deployment.
-5. Add additional feed URLs to scripts/ingest.py after verifying availability and reuse terms.
+## AI summaries and translated headlines
+AI enrichment is optional. To enable it, add a repository Actions secret named `ME9_OPENAI_API_KEY` with an authorized OpenAI API key under Settings → Secrets and variables → Actions. Without that secret, ME9 displays publisher-provided excerpts and does not label them as AI-generated. Never put API keys in source files.
 
-Feed availability varies by publisher. A source being listed on the homepage does not mean it is already connected. RSS excerpts are used only where exposed; original publisher links are preserved. Automated topic and country classification is approximate. Translation, AI-written summaries, database-backed archiving and editorial review are not yet configured.
+## Deployment and data caveats
+Check Actions runs for successful ingestion and deployment. Feed availability varies; configured sources are not a guarantee that every publisher currently responds. RSS metadata may not include a publisher image. Automated country/topic classification can be imperfect. The regional explorer is a schematic selector, not a geographic boundary map. No database is required for the current static deployment; persistent history and editorial workflows are not configured.
