@@ -39,7 +39,19 @@ jobs:
           git commit -m "chore: refresh ME9 news feed"
           for attempt in 1 2 3; do
             git fetch origin main
-            git rebase origin/main
+            if ! git rebase origin/main; then
+              # Both the workflow run and another recent run may update the feed.
+              # Keep this run's freshly generated feed when that file conflicts.
+              if git status --short | grep -q 'data/news.json'; then
+                git checkout --theirs data/news.json
+                git add data/news.json
+                GIT_EDITOR=true git -c core.editor=true rebase --continue
+              else
+                git rebase --abort
+                echo "Rebase conflict outside the generated feed."
+                exit 1
+              fi
+            fi
             if git push origin HEAD:main; then
               exit 0
             fi
