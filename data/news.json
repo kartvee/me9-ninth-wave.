@@ -1,14 +1,29 @@
 {
   "status": "live",
-  "updated_at": "2026-10-20T16:48:27.176081+00:00",
+  "updated_at": "2026-10-20T16:52:41.015934+00:00",
   "source_count": 12,
   "active_source_count": 9,
   "ai_enabled": false,
   "articles": [
     {
+      "id": "9353741790e400f5",
+      "title": "5 things the EU wants to change about its Arctic policy",
+      "summary": "As melting ice opens new routes and access to resources in the North, the EU wants piece of the cake.",
+      "summary_en": "",
+      "translated_title": "",
+      "source": "POLITICO Europe",
+      "url": "https://www.politico.eu/article/5-things-the-eu-wants-to-change-about-its-arctic-policy/?utm_source=RSS_Feed&utm_medium=RSS&utm_campaign=RSS_Syndication",
+      "image": "",
+      "published_at": "2026-10-20T16:47:42+00:00",
+      "country": "Regional",
+      "topic": "Politics",
+      "summary_type": "publisher_excerpt",
+      "automated": true
+    },
+    {
       "id": "da7805e1227c81fe",
       "title": "Italy to deploy 500 troops to Milan after days of protests and looting",
-      "summary": "Government planning tougher security measures as France also says military forces will be deployed     Why are people protesting across Europe?     Italy’s government is sending 500 soldiers to Milan and vowed a “firm response from the state” after protests against the cost of living descended into clashes with police, vandalism and looting. Further demonstrations are planned on Saturday.  The government of the far-right prime minister, Giorgia Meloni, is also planning to swiftly approve tougher new security measures, including extending preventive detention for minors, cracking down on youth gangs and banning gatherings for people deemed a t",
+      "summary": "Government planning tougher security measures as France also says military forces will be deployed     Why are people protesting across Europe?     Italy’s government is sending 500 soldiers to Milan as it vowed a “firm response from the state” after protests against the high cost of living descended into clashes with police, vandalism and looting. Further demonstrations are planned on Saturday.  The government of the far-right prime minister, Giorgia Meloni, is also planning to swiftly approve tougher new security measures, including extending preventive detention for minors, cracking down on youth gangs and banning gatherings for people dee",
       "summary_en": "",
       "translated_title": "",
       "source": "The Guardian",
@@ -632,21 +647,6 @@
       "published_at": "2026-10-20T10:09:51+00:00",
       "country": "Tajikistan",
       "topic": "Security",
-      "summary_type": "publisher_excerpt",
-      "automated": true
-    },
-    {
-      "id": "b56316c986748eb4",
-      "title": "AfD’s Alice Weidel to unveil plan to downsize the EU",
-      "summary": "The far-right party leader will present her party's ideas for the EU at the European Parliament.",
-      "summary_en": "",
-      "translated_title": "",
-      "source": "POLITICO Europe",
-      "url": "https://www.politico.eu/article/afd-alternative-for-germany-alice-weidel-plan-downsize-eu/?utm_source=RSS_Feed&utm_medium=RSS&utm_campaign=RSS_Syndication",
-      "image": "",
-      "published_at": "2026-10-20T10:01:16+00:00",
-      "country": "Regional",
-      "topic": "Politics",
       "summary_type": "publisher_excerpt",
       "automated": true
     },
