@@ -42,7 +42,7 @@ button,select{cursor:pointer}
 .intro-stat p{font:12px/1.6 var(--serif);color:#626b73}
 .filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:20px 0 22px;border-bottom:1px solid var(--line)}
 .filter-title{font-size:9px;font-weight:800;letter-spacing:.1em;margin-right:5px;color:#4c555d}
-.filters input,.filters select,.section-head select,.compare-controls select{background:var(--surface);border:1px solid #d9d8d4;border-radius:5px;padding:10px 12px;font:11px inherit;color:var(--ink);min-height:39px;transition:border-color .18s,box-shadow .18s}
+.filters input,.filters select,.section-head select,.compare-controls select{background:var(--surface);border:1px solid #d9d8d4;border-radius:5px;padding:10px 12px;font:11px Arial,sans-serif;color:var(--ink);min-height:39px;transition:border-color .18s,box-shadow .18s}
 .filters input{flex:1;min-width:190px}
 .filters select{min-width:130px}
 .filters input:focus,.filters select:focus,.section-head select:focus,.compare-controls select:focus{outline:none;border-color:#9c6b70;box-shadow:0 0 0 3px #a9323d14}
