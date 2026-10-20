@@ -1,6 +1,7 @@
 import json, re, hashlib, urllib.request, urllib.error, xml.etree.ElementTree as ET, os
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from urllib.parse import quote
 from html import unescape
 FEEDS=[
 # Established international outlets
@@ -70,6 +71,20 @@ def image_url(node):
     m=re.search(r"<(?:media:content|media:thumbnail)[^>]+url=[\"']([^\"']+)",raw)
     if not m:m=re.search(r"<img[^>]+src=[\"']([^\"']+)",raw,re.I)
     return m.group(1) if m else ""
+def translate_to_english(text):
+    """Translate non-English feed text to English using Google's public translation endpoint."""
+    if not text:return text, "en"
+    url="https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q="+quote(text[:1200])
+    req=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0 ME9-NewsMonitor/1.2"})
+    try:
+        with urllib.request.urlopen(req,timeout=5) as res:data=json.loads(res.read())
+        translated="".join(part[0] for part in data[0] if part and part[0])
+        detected=(data[2] or "en").lower() if len(data)>2 else "en"
+        return clean(translated) or text, detected
+    except Exception as e:
+        print("Translation unavailable:",str(e)[:100])
+        return text, "unknown"
+
 def ai_enrich(title,excerpt):
     key=os.environ.get("ME9_OPENAI_API_KEY")
     if not key:return None
@@ -89,7 +104,7 @@ for source,url in FEEDS:
         with urllib.request.urlopen(req,timeout=18) as response:root=ET.fromstring(response.read())
         nodes=root.findall(".//item") or root.findall(".//{http://www.w3.org/2005/Atom}entry")
         feed_ok+=1
-        for node in nodes[:35]:
+        for node in nodes[:12]:
             title=clean(first_text(node,["title","{http://www.w3.org/2005/Atom}title"]))
             link=first_text(node,["link"])
             if not link:
@@ -101,7 +116,18 @@ for source,url in FEEDS:
             key=hashlib.sha256(re.sub(r"[^a-z0-9]","",title.lower()).encode()).hexdigest()
             if key in seen:continue
             seen.add(key);country,topic=classify(title+" "+excerpt)
-            article={"id":key[:16],"title":title,"summary":excerpt,"summary_en":"","translated_title":"","source":source,"url":link,"image":image_url(node),"published_at":parse_date(pub),"country":country,"topic":topic,"summary_type":"publisher_excerpt","automated":True}
+            # Keep Georgian headlines in Georgian and add their English translation.
+            # For all other non-English headlines, publish the English translation only.
+            translated_title=""
+            title_en, detected=translate_to_english(title)
+            summary_en=""
+            if detected == "ka":
+                translated_title=title_en if title_en.lower()!=title.lower() else ""
+            elif detected not in ("en","unknown"):
+                title=title_en
+            if detected not in ("en","unknown"):
+                summary_en, _=translate_to_english(excerpt)
+            article={"id":key[:16],"title":title,"summary":excerpt if detected in ("en","ka","unknown") else summary_en,"summary_en":summary_en,"translated_title":translated_title,"source":source,"url":link,"image":image_url(node),"published_at":parse_date(pub),"country":country,"topic":topic,"summary_type":"publisher_excerpt","automated":True,"language":"ka" if detected=="ka" else "en"}
             enriched=ai_enrich(title,excerpt)
             if enriched:article.update(enriched)
             items.append(article)
