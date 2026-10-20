@@ -69,9 +69,9 @@ def classify(text, source=""):
         "turkmen.news":"Turkmenistan","turan":"Azerbaijan",
         "mediazona":"Russia","taiga.info":"Russia","fortanga":"Russia"
     }
-    country=next((c for hint,c in source_country.items() if hint in source_low),None)
+    country=next((c for c,terms in COUNTRIES.items() if any(t in low for t in terms)),None)
     if not country:
-        country=next((c for c,terms in COUNTRIES.items() if any(t in low for t in terms)),"Regional")
+        country=next((c for hint,c in source_country.items() if hint in source_low),"Regional")
     topic=next((c for c,terms in TOPICS.items() if any(t in low for t in terms)),"Politics")
     return country,topic
 def first_text(node,names):
