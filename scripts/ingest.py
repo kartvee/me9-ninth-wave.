@@ -3,18 +3,44 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from html import unescape
 FEEDS=[
+# Established international outlets
 ("BBC News","https://feeds.bbci.co.uk/news/world/europe/rss.xml"),
 ("The Guardian","https://www.theguardian.com/world/europe-news/rss"),
 ("France 24","https://www.france24.com/en/europe/rss"),
 ("RFE/RL","https://www.rferl.org/api/z-pqpiev-qpp"),
 ("Eurasianet","https://eurasianet.org/feed"),
+("The Economist","https://www.economist.com/the-world-this-week/rss.xml"),
+("CNN World","https://rss.cnn.com/rss/edition_world.rss"),
+("POLITICO Europe","https://www.politico.eu/feed/"),
+("The Telegraph","https://www.telegraph.co.uk/rss.xml"),
+# Reuters stopped maintaining its former public RSS; Google News site-search RSS keeps attribution on original Reuters URLs.
+("Reuters (Google News feed)","https://news.google.com/rss/search?q=site%3Areuters.com&hl=en-US&gl=US&ceid=US:en"),
+("TASS (Google News feed)","https://news.google.com/rss/search?q=site%3Atass.com&hl=en-US&gl=US&ceid=US:en"),
+("Sputnik (Google News feed)","https://news.google.com/rss/search?q=site%3Asputnikglobe.com+OR+site%3Asputniknews.com&hl=en-US&gl=US&ceid=US:en"),
+("Current Time (Google News feed)","https://news.google.com/rss/search?q=site%3Acurrenttime.tv&hl=en-US&gl=US&ceid=US:en"),
+# South Caucasus
 ("Agenda.ge","https://agenda.ge/en/rss"),
 ("Civil Georgia","https://civil.ge/feed"),
 ("OC Media","https://oc-media.org/feed/"),
+("Interpressnews (Google News feed)","https://news.google.com/rss/search?q=site%3Aipn.ge&hl=en-US&gl=GE&ceid=GE:en"),
+("Netgazeti","https://netgazeti.ge/feed/"),
+("Radio Tavisupleba (Georgian RFE/RL)","https://www.radiotavisupleba.ge/api/z-pqpiev-qpp"),
+("Turan (Google News feed)","https://news.google.com/rss/search?q=site%3Aturan.az&hl=en-US&gl=AZ&ceid=AZ:en"),
+# Central Asia
 ("Asia-Plus","https://asiaplustj.info/en/feed"),
-("The Economist","https://www.economist.com/the-world-this-week/rss.xml"),
-("CNN World","https://rss.cnn.com/rss/edition_world.rss"),
-("POLITICO Europe","https://www.politico.eu/feed/")]
+("Avesta","https://avesta.tj/feed/"),
+("Faraj (Google News feed)","https://news.google.com/rss/search?q=site%3Afaraj.tj&hl=en-US&gl=TJ&ceid=TJ:en"),
+("24.kg","https://24.kg/rss.xml"),
+("Kaktus Media","https://kaktus.media/rss"),
+("KyrTAG (Google News feed)","https://news.google.com/rss/search?q=site%3Akyrtag.kg&hl=en-US&gl=KG&ceid=KG:en"),
+("Kun.uz","https://kun.uz/news/rss"),
+("Xabar.uz (Google News feed)","https://news.google.com/rss/search?q=site%3Axabar.uz&hl=en-US&gl=UZ&ceid=UZ:en"),
+("UzDaily (Google News feed)","https://news.google.com/rss/search?q=site%3Auzdaily.uz&hl=en-US&gl=UZ&ceid=UZ:en"),
+("Turkmen.news","https://turkmen.news/feed/"),
+# Russia / Eastern Europe
+("Mediazona","https://zona.media/rss"),
+("Taiga.info (Google News feed)","https://news.google.com/rss/search?q=site%3Ataiga.info&hl=en-US&gl=RU&ceid=RU:en"),
+("Fortanga (Google News feed)","https://news.google.com/rss/search?q=site%3Afortanga.org&hl=en-US&gl=RU&ceid=RU:en")]
 COUNTRIES={"Georgia":["georgia","tbilisi","abkhazia","south ossetia"],"Armenia":["armenia","yerevan","nagorno-karabakh"],"Azerbaijan":["azerbaijan","baku","karabakh"],"Kazakhstan":["kazakhstan","astana","almaty"],"Kyrgyzstan":["kyrgyzstan","bishkek"],"Tajikistan":["tajikistan","dushanbe"],"Turkmenistan":["turkmenistan","ashgabat"],"Uzbekistan":["uzbekistan","tashkent"],"Russia":["russia","moscow","kremlin","siberia","chechnya"],"Ukraine":["ukraine","kyiv","kiev"],"World":["united states","china","european union","united nations"]}
 TOPICS={"Security":["security","military","war","defence","defense","border","attack","army","conflict"],"Diplomacy":["diplomacy","minister","summit","agreement","ambassador","talks","foreign affairs"],"Economy":["economy","trade","inflation","gdp","business","market","finance"],"Energy":["energy","oil","gas","pipeline","electricity","nuclear"],"Sports":["football","sport","championship","olympic"],"Technology":["technology","cyber","artificial intelligence","digital"],"Society":["protest","rights","education","society","school"],"Politics":["politic","parliament","president","government","election","vote"]}
 def clean(s):
