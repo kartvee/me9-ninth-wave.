@@ -23,7 +23,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Fetch public RSS feeds and deduplicate
+      - name: Fetch public RSS feeds, deduplicate and enrich
+        env:
+          ME9_OPENAI_API_KEY: ${{ secrets.ME9_OPENAI_API_KEY }}
         run: python scripts/ingest.py
       - name: Commit and safely push refreshed dataset
         run: |
