@@ -3,21 +3,24 @@ let articles=[],limit=10;
 const regions=[['GE','Georgia'],['AM','Armenia'],['AZ','Azerbaijan'],['KZ','Kazakhstan'],['KG','Kyrgyzstan'],['TJ','Tajikistan'],['TM','Turkmenistan'],['UZ','Uzbekistan'],['RU','Russia'],['UA','Ukraine'],['RG','Regional'],['WO','World']];
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function date(s){const d=new Date(s);return s&&!isNaN(d)?d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC':'Time unavailable'}
-const fallbackImages={
-  Security:'https://images.unsplash.com/photo-1527489377706-5bf97e608852?auto=format&fit=crop&w=1200&q=80',
-  Diplomacy:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80',
-  Economy:'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
-  Energy:'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1200&q=80',
-  Sports:'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80',
-  Technology:'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
-  Society:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80',
-  Politics:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80',
-  default:'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80'
+const fallbackPalette={
+  Security:{accent:'#a9323d',label:'SECURITY & DEFENCE'},
+  Diplomacy:{accent:'#344e6c',label:'DIPLOMACY'},
+  Economy:{accent:'#96733b',label:'ECONOMY & TRADE'},
+  Energy:{accent:'#39766a',label:'ENERGY'},
+  Sports:{accent:'#497b45',label:'SPORTS'},
+  Technology:{accent:'#596a9b',label:'TECHNOLOGY'},
+  Society:{accent:'#8a5d83',label:'SOCIETY'},
+  Politics:{accent:'#a9323d',label:'POLITICS'}
 };
-function fallbackImage(a){return fallbackImages[a.topic]||fallbackImages.default}
+function fallbackImage(a){
+  const p=fallbackPalette[a.topic]||{accent:'#344e6c',label:'REGIONAL NEWS'};
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="#182735"/><circle cx="900" cy="245" r="245" fill="none" stroke="'+p.accent+'" stroke-width="3" opacity=".8"/><circle cx="900" cy="245" r="185" fill="none" stroke="#ffffff" stroke-width="1.5" opacity=".25"/><ellipse cx="900" cy="245" rx="90" ry="245" fill="none" stroke="#ffffff" stroke-width="1.5" opacity=".25"/><path d="M655 245H1145M680 145H1120M680 345H1120" stroke="#ffffff" stroke-width="1.5" opacity=".22"/><path d="M0 520L1200 270V675H0Z" fill="'+p.accent+'" opacity=".24"/><rect x="72" y="78" width="12" height="94" fill="'+p.accent+'"/><text x="112" y="112" font-family="Arial,sans-serif" font-size="22" letter-spacing="7" fill="#d7dce0">ME9 · NINTH WAVE</text><text x="112" y="168" font-family="Georgia,serif" font-size="38" fill="#ffffff">Regional intelligence</text><text x="112" y="215" font-family="Arial,sans-serif" font-size="18" letter-spacing="4" fill="#e2b7ba">'+p.label+'</text><path d="M112 254H410" stroke="'+p.accent+'" stroke-width="4"/><text x="112" y="612" font-family="Arial,sans-serif" font-size="17" letter-spacing="3" fill="#ffffff" opacity=".82">ILLUSTRATIVE IMAGE · NOT A NEWS PHOTOGRAPH</text></svg>';
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+}
 function image(a,lead=false){
   const original=String(a.image||'').trim(),fallback=fallbackImage(a),isFallback=!original,src=original||fallback;
-  return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+'"><img class="'+(lead?'lead-image':'card-image')+'" src="'+esc(src)+'" alt="'+esc(a.title)+'" loading="lazy" referrerpolicy="no-referrer" data-fallback-tried="'+(isFallback?'1':'0')+'" onerror="if(this.dataset.fallbackTried!==\'1\'){this.dataset.fallbackTried=\'1\';this.dataset.fallback=\'true\';this.src=\''+esc(fallback)+'\';this.nextElementSibling.hidden=false}else{this.parentElement.style.display=\'none\'}"><span class="image-note" '+(isFallback?'':'hidden')+'>ILLUSTRATIVE IMAGE</span></div>'
+  return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+'"><img class="'+(lead?'lead-image':'card-image')+'" src="'+esc(src)+'" alt="'+esc(a.title)+'" loading="lazy" referrerpolicy="no-referrer" data-fallback-tried="'+(isFallback?'1':'0')+'" onerror="if(this.dataset.fallbackTried!==\'1\'){this.dataset.fallbackTried=\'1\';this.dataset.fallback=\'true\';this.src=\''+fallback+'\';this.nextElementSibling.hidden=false}else{this.parentElement.style.display=\'none\'}"><span class="image-note" '+(isFallback?'':'hidden')+'>ILLUSTRATIVE IMAGE</span></div>'
 }
 function summary(a){return a.summary_en||a.summary||'Open the publisher for full context.'}
 function card(a){return '<article class="card">'+image(a)+'<div class="card-copy"><div class="label">'+esc(a.country)+' / '+esc(a.topic)+' · '+esc(a.source)+'</div><h3>'+esc(a.title)+'</h3>'+(a.translated_title?'<p class="translation">English title: '+esc(a.translated_title)+'</p>':'')+'<p>'+esc(summary(a))+'</p><div class="meta">'+date(a.published_at)+' · '+esc(a.summary_type==='ai_summary'?'ME9 AI summary':'Publisher excerpt')+'</div><a class="read-link" href="'+esc(a.url)+'" target="_blank" rel="noopener noreferrer">Read original report ↗</a></div></article>'}
