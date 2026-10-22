@@ -1,7 +1,8 @@
 import json, re, hashlib, urllib.request, urllib.error, xml.etree.ElementTree as ET, os
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
+from concurrent.futures import ThreadPoolExecutor
 from html import unescape
 FEEDS=[
 # Established international outlets
@@ -80,17 +81,73 @@ def first_text(node,names):
         if el is not None and el.text:return el.text.strip()
     return ""
 def image_url(node):
-    for name in ["{http://search.yahoo.com/mrss/}content","{http://search.yahoo.com/mrss/}thumbnail","enclosure","{http://www.w3.org/2005/Atom}link"]:
-        el=node.find(name)
-        if el is None:continue
-        url=el.attrib.get("url") or el.attrib.get("href","")
-        typ=el.attrib.get("type","")
-        if url and (name.endswith("link}") and el.attrib.get("rel")!="enclosure"):continue
-        if url and (name!="enclosure" or typ.startswith("image/") or re.search(r"\\.(jpg|jpeg|png|webp)(?:\\?|$)",url,re.I)):return url
-    raw=ET.tostring(node,encoding="unicode")
-    m=re.search(r"<(?:media:content|media:thumbnail)[^>]+url=[\"']([^\"']+)",raw)
-    if not m:m=re.search(r"<img[^>]+src=[\"']([^\"']+)",raw,re.I)
-    return m.group(1) if m else ""
+    """Prefer the largest explicitly supplied image, not a tiny RSS thumbnail."""
+    candidates = []
+    media = "{http://search.yahoo.com/mrss/}"
+    atom = "{http://www.w3.org/2005/Atom}"
+    for name in [media+"content", media+"thumbnail", "enclosure", atom+"link"]:
+        for el in node.findall(name):
+            url = el.attrib.get("url") or el.attrib.get("href", "")
+            typ = el.attrib.get("type", "").lower()
+            if not url or (name == atom+"link" and el.attrib.get("rel") != "enclosure"):
+                continue
+            if name == "enclosure" and not (typ.startswith("image/") or re.search(r"\.(jpg|jpeg|png|webp|avif)(?:\?|$)", url, re.I)):
+                continue
+            if typ and not typ.startswith("image/") and name != media+"thumbnail":
+                continue
+            try:
+                width = int(el.attrib.get("width", 0) or 0)
+                height = int(el.attrib.get("height", 0) or 0)
+            except ValueError:
+                width = height = 0
+            # Prefer known high-resolution variants; retain unknown-size images as fallback.
+            score = (width * height) if width and height else (width * 1000 if width else 1)
+            candidates.append((score, url))
+    raw = ET.tostring(node, encoding="unicode")
+    # Feed descriptions sometimes contain the publisher's featured image.
+    for match in re.finditer(r"<img\b[^>]*(?:src|data-src)=[\"']([^\"']+)[\"'][^>]*>", raw, re.I):
+        url = unescape(match.group(1))
+        if url.startswith(("https://", "http://")):
+            candidates.append((500000, url))
+    if not candidates:
+        return ""
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1]
+
+def page_og_image(article):
+    """Fetch a publisher's Open Graph image as a higher-quality alternative to RSS thumbnails."""
+    url = article.get("url", "")
+    if not url.startswith(("https://", "http://")):
+        return None
+    host = re.sub(r"^www\.", "", urllib.request.urlparse(url).netloc.lower()) if hasattr(urllib.request, "urlparse") else ""
+    if host == "news.google.com":
+        return None
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent":"Mozilla/5.0 (compatible; ME9-NewsMonitor/1.3)", "Accept":"text/html"})
+        with urllib.request.urlopen(req, timeout=4) as response:
+            if "html" not in response.headers.get("Content-Type", "").lower():
+                return None
+            html = response.read(500000).decode("utf-8", errors="ignore")
+            final_url = response.geturl()
+        metas = re.findall(r"<meta\b[^>]*>", html, re.I)
+        found = {}
+        for tag in metas:
+            key_match = re.search(r"\b(?:property|name)\s*=\s*[\"']([^\"']+)[\"']", tag, re.I)
+            val_match = re.search(r"\bcontent\s*=\s*[\"']([^\"']+)[\"']", tag, re.I)
+            if key_match and val_match:
+                found[key_match.group(1).lower()] = unescape(val_match.group(1).strip())
+        image = found.get("og:image") or found.get("og:image:url") or found.get("twitter:image") or found.get("twitter:image:src")
+        if not image:
+            return None
+        image = urljoin(final_url, image)
+        if not image.startswith(("https://", "http://")) or re.search(r"\.(svg|gif)(?:\?|$)", image, re.I):
+            return None
+        if re.search(r"(?:logo|favicon|avatar|sprite)", image, re.I):
+            return None
+        return image
+    except Exception as e:
+        return None
+
 def translate_to_english(text):
     """Translate non-English feed text to English using Google's public translation endpoint."""
     if not text:return text, "en"
@@ -153,6 +210,18 @@ for source,url in FEEDS:
             items.append(article)
     except Exception as e:print("Feed failed:",source,str(e)[:200])
 items.sort(key=lambda x:x["published_at"],reverse=True)
+# Publisher pages often expose a much larger featured image than their RSS thumbnail.
+# Check only the most recent 36 stories in parallel to keep the scheduled ingestion bounded.
+image_candidates = [item for item in items[:36] if item.get("url")]
+with ThreadPoolExecutor(max_workers=8) as pool:
+    futures = {pool.submit(page_og_image, item): item for item in image_candidates}
+    for future, item in list(futures.items()):
+        try:
+            better_image = future.result(timeout=6)
+            if better_image:
+                item["image"] = better_image
+        except Exception:
+            pass
 out={"status":"live" if items else "demo","updated_at":datetime.now(timezone.utc).isoformat(),"source_count":len(FEEDS),"active_source_count":feed_ok,"ai_enabled":bool(os.environ.get("ME9_OPENAI_API_KEY")),"articles":items}
 os.makedirs("data",exist_ok=True)
 with open("data/news.json","w",encoding="utf-8") as f:json.dump(out,f,ensure_ascii=False,indent=2)
