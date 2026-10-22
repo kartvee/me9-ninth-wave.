@@ -1,7 +1,7 @@
 import json, re, hashlib, urllib.request, urllib.error, xml.etree.ElementTree as ET, os
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, urljoin, urlparse
 from concurrent.futures import ThreadPoolExecutor
 from html import unescape
 FEEDS=[
@@ -119,7 +119,7 @@ def page_og_image(article):
     url = article.get("url", "")
     if not url.startswith(("https://", "http://")):
         return None
-    host = re.sub(r"^www\.", "", urllib.request.urlparse(url).netloc.lower()) if hasattr(urllib.request, "urlparse") else ""
+    host = re.sub(r"^www\.", "", urlparse(url).netloc.lower())
     if host == "news.google.com":
         return None
     try:
