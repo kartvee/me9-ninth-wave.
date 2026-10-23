@@ -368,3 +368,9 @@ footer{margin-top:45px;background:#020b1b;border-top:1px solid #17365e}
 .region-list .region-btn .flag{display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px;width:28px;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:21px;line-height:1.2;background:transparent;border:0;box-shadow:none;padding:0;}
 .region-list .region-btn .region-name{flex:1;min-width:0;}
 .region-list .region-btn b{margin-left:auto;}
+
+.region-list .region-btn .flag{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;order:0;margin:0!important;font-size:19px;line-height:1;background:none;border:0;box-shadow:none;padding:0;}
+.region-list .region-btn .flag img{display:block;width:25px;height:17px;object-fit:cover;border-radius:2px;box-shadow:0 0 0 1px #ffffff26;}
+.region-list .region-btn .region-name{order:1;flex:1;min-width:0;}
+.region-list .region-btn b{order:3;margin-left:auto;}
+.region-list .region-btn:before{display:none!important;}
