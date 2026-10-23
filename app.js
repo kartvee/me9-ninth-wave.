@@ -24,7 +24,7 @@ const translations={
 };
 const inverseTranslations=Object.fromEntries(Object.entries(translations).map(([en,ka])=>[ka,en]));
 const originalTextNodes=new WeakMap(),originalAttributes=new WeakMap();
-function isGeorgian(s){return /[\\u10A0-\\u10FF]/.test(s)}
+function isGeorgian(s){return /[\u10A0-\u10FF]/.test(s)}
 function applyLanguage(){
  const toKa={},toEn={};
  Object.entries(translations).forEach(([k,v])=>{
