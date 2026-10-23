@@ -207,3 +207,10 @@ footer{background:#14212c;margin-top:30px}
   .footer>span:last-child{margin:0}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* Ninth Wave brand assets; preserve the existing editorial palette and layout */
+.brand-logo{display:block;width:min(620px,100%);height:auto;max-height:92px}
+.brand{min-width:0;flex:0 1 620px}
+.footer-brand img{display:block;width:min(330px,100%);height:auto;filter:brightness(0) invert(1);opacity:.94}
+.footer-brand small{color:#c5cbd0}
+@media(max-width:700px){.masthead{gap:16px;align-items:flex-start}.brand{flex:1}.brand-logo{max-height:66px}.mast-right{font-size:8px;max-width:135px}.footer-brand img{width:min(260px,100%)}}
