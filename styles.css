@@ -374,3 +374,9 @@ footer{margin-top:45px;background:#020b1b;border-top:1px solid #17365e}
 .region-list .region-btn .region-name{order:1;flex:1;min-width:0;}
 .region-list .region-btn b{order:3;margin-left:auto;}
 .region-list .region-btn:before{display:none!important;}
+
+/* Compact, accessible language switch */
+.nav-lang{display:inline-flex;align-items:center;gap:8px;margin-left:auto!important}
+.lang-btn{border:1px solid #25466e;background:transparent;color:#9bb5db;border-radius:5px;padding:7px 10px;font:700 12px system-ui,sans-serif;cursor:pointer}
+.lang-btn:hover,.lang-btn.active{background:#ff7a18;border-color:#ff7a18;color:#06152d}
+@media(max-width:600px){.nav-lang{gap:5px}.lang-btn{padding:6px 8px;font-size:11px}}
