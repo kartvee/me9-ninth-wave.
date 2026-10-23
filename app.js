@@ -1,6 +1,6 @@
 const $=s=>document.querySelector(s);
 let articles=[],limit=10;
-const regions=[['🇬🇪','Georgia'],['🇦🇲','Armenia'],['🇦🇿','Azerbaijan'],['🇰🇿','Kazakhstan'],['🇰🇬','Kyrgyzstan'],['🇹🇯','Tajikistan'],['🇹🇲','Turkmenistan'],['🇺🇿','Uzbekistan'],['🇷🇺','Russia'],['🇺🇦','Ukraine'],['🌐','Regional'],['🌍','World']];
+const regions=[['ge','Georgia'],['am','Armenia'],['az','Azerbaijan'],['kz','Kazakhstan'],['kg','Kyrgyzstan'],['tj','Tajikistan'],['tm','Turkmenistan'],['uz','Uzbekistan'],['ru','Russia'],['ua','Ukraine'],['🌐','Regional'],['🌍','World']];
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function date(s){const d=new Date(s);return s&&!isNaN(d)?d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC':'Time unavailable'}
 const fallbackPalette={
