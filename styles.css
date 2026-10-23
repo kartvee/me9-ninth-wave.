@@ -362,3 +362,9 @@ footer{margin-top:45px;background:#020b1b;border-top:1px solid #17365e}
 .footer-brand img{filter:none}
 @media(max-width:900px){.wrap,main.wrap{width:calc(100% - 32px)}.news-layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.lead{grid-template-columns:1fr 1fr}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.nav .wrap{justify-content:flex-start}.nav-lang{margin-left:0}}
 @media(max-width:600px){.masthead{min-height:80px;padding:12px 0}.brand-logo{width:255px;max-height:58px}.mast-right{display:none}.nav .wrap{gap:20px;min-height:48px}.nav a{font-size:11px;padding:15px 0 12px}.news-layout{margin-top:14px}.lead{display:flex;flex-direction:column-reverse;gap:0}.lead-frame,.lead-image{min-height:205px;height:205px}.lead-copy{padding:18px 0}.lead h3{font-size:25px}.cards{grid-template-columns:1fr}.sidebar{grid-template-columns:1fr}.section-head h2{font-size:23px}}
+
+/* Country flags: visible, consistent right-sidebar rows */
+.region-list .region-btn{display:flex;align-items:center;gap:10px;text-align:left;width:100%;}
+.region-list .region-btn .flag{display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px;width:28px;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:21px;line-height:1.2;background:transparent;border:0;box-shadow:none;padding:0;}
+.region-list .region-btn .region-name{flex:1;min-width:0;}
+.region-list .region-btn b{margin-left:auto;}
