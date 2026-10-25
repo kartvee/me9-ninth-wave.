@@ -430,3 +430,22 @@ footer{background:#123047!important;color:#fff!important;border-top:0!important}
 .footer>span,.footer>span:last-child{color:#d4dbe1!important}
 .footer-brand img{filter:none!important}
 @media(max-width:600px){.intro{display:grid!important}.filters{display:flex!important}.status{display:block!important}}
+
+
+/* Card symmetry and dependable image framing */
+.cards{grid-auto-rows:1fr;align-items:stretch}
+.card{height:100%;min-height:100%}
+.card-frame{width:100%;aspect-ratio:16/9;flex:0 0 auto}
+.card-image{width:100%;height:100%;aspect-ratio:16/9;object-fit:cover}
+.card-copy{min-height:265px}
+.card h3{min-height:3.96em;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-copy>p:not(.translation){display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;min-height:6.8em}
+.lead{align-items:stretch}
+.lead-frame{height:100%;min-height:340px}
+.lead-image{height:100%;min-height:340px;object-fit:cover}
+.image-frame img{object-position:center}
+@media(max-width:700px){
+ .cards{grid-template-columns:1fr;grid-auto-rows:auto}
+ .card-copy{min-height:0}
+ .card h3,.card-copy>p:not(.translation){min-height:0}
+}
