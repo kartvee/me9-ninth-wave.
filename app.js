@@ -59,7 +59,7 @@ const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function date(s){const d=new Date(s);return s&&!isNaN(d)?d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC':'Time unavailable'}
 const topicPhotos={
   Security:'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=80',
-  Diplomacy:'https://images.unsplash.com/photo-1529101081514-5b6f3b9e8f9a?auto=format&fit=crop&w=1200&q=80',
+  Diplomacy:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80',
   Economy:'https://images.unsplash.com/photo-1460925895917-afdad827c52f?auto=format&fit=crop&w=1200&q=80',
   Energy:'https://images.unsplash.com/photo-1473341304170-971499b5ac7e?auto=format&fit=crop&w=1200&q=80',
   Sports:'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80',
@@ -68,8 +68,8 @@ const topicPhotos={
   Politics:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80'
 };
 const generalTopicPhotos=[
- 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1200&q=80',
- 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80'
+ 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+ 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80'
 ];
 function fallbackImage(a){
   const topic=String(a.topic||'').toLowerCase();
@@ -83,9 +83,15 @@ function fallbackImage(a){
   if(/sport|football|სპორტ|ფეხბურთ/.test(title))return topicPhotos.Sports;
   return generalTopicPhotos[0];
 }
+function imageError(img){
+  const stage=Number(img.dataset.imageStage||0);
+  if(stage===0){img.dataset.imageStage='1';img.src=img.dataset.topicFallback;return}
+  if(stage===1){img.dataset.imageStage='2';img.src=generalTopicPhotos[0];return}
+  img.parentElement.classList.add('image-unavailable');
+}
 function image(a,lead=false){
-  const original=String(a.image||'').trim(),fallback=fallbackImage(a),isFallback=!original,src=original||fallback;
-  return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+'"><img class="'+(lead?'lead-image':'card-image')+'" src="'+esc(src)+'" alt="'+esc(a.title)+'" loading="lazy" referrerpolicy="no-referrer" data-fallback-tried="'+(isFallback?'1':'0')+'" onerror="if(this.dataset.fallbackTried!==\'1\'){this.dataset.fallbackTried=\'1\';this.dataset.fallback=\'true\';this.src=\''+fallback+'\';this.nextElementSibling.hidden=false}else{this.parentElement.style.display=\'none\'}"><span class="image-note" '+(isFallback?'':'hidden')+'>ILLUSTRATIVE IMAGE</span></div>'
+  const original=String(a.image||'').trim(),fallback=fallbackImage(a),src=original||fallback;
+  return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+'"><img class="'+(lead?'lead-image':'card-image')+'" src="'+esc(src)+'" data-topic-fallback="'+esc(fallback)+'" data-image-stage="'+(original?'0':'1')+'" alt="'+esc(a.title)+'" loading="lazy" referrerpolicy="no-referrer" onerror="imageError(this)"><span class="image-note" '+(original?'hidden':'')+'>TOPIC PHOTO</span></div>'
 }
 function summary(a){return a.summary_en||a.summary||'Open the publisher for full context.'}
 function card(a){return '<article class="card">'+image(a)+'<div class="card-copy"><div class="label">'+esc(a.country)+' / '+esc(a.topic)+' · '+esc(a.source)+'</div><h3>'+esc(a.title)+'</h3>'+(a.translated_title?'<p class="translation">English title: '+esc(a.translated_title)+'</p>':'')+'<p>'+esc(summary(a))+'</p><div class="meta">'+date(a.published_at)+' · '+esc(a.summary_type==='ai_summary'?'ME9 AI summary':'Publisher excerpt')+'</div><a class="read-link" href="'+esc(a.url)+'" target="_blank" rel="noopener noreferrer">Read original report ↗</a></div></article>'}
