@@ -57,20 +57,31 @@ function applyLanguage(){
 
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function date(s){const d=new Date(s);return s&&!isNaN(d)?d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC':'Time unavailable'}
-const fallbackPalette={
-  Security:{accent:'#a9323d',label:'SECURITY & DEFENCE'},
-  Diplomacy:{accent:'#344e6c',label:'DIPLOMACY'},
-  Economy:{accent:'#96733b',label:'ECONOMY & TRADE'},
-  Energy:{accent:'#39766a',label:'ENERGY'},
-  Sports:{accent:'#497b45',label:'SPORTS'},
-  Technology:{accent:'#596a9b',label:'TECHNOLOGY'},
-  Society:{accent:'#8a5d83',label:'SOCIETY'},
-  Politics:{accent:'#a9323d',label:'POLITICS'}
+const topicPhotos={
+  Security:'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=80',
+  Diplomacy:'https://images.unsplash.com/photo-1529101081514-5b6f3b9e8f9a?auto=format&fit=crop&w=1200&q=80',
+  Economy:'https://images.unsplash.com/photo-1460925895917-afdad827c52f?auto=format&fit=crop&w=1200&q=80',
+  Energy:'https://images.unsplash.com/photo-1473341304170-971499b5ac7e?auto=format&fit=crop&w=1200&q=80',
+  Sports:'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80',
+  Technology:'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+  Society:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80',
+  Politics:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80'
 };
+const generalTopicPhotos=[
+ 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1200&q=80',
+ 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80'
+];
 function fallbackImage(a){
-  const p=fallbackPalette[a.topic]||{accent:'#344e6c',label:'REGIONAL NEWS'};
-  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="#182735"/><circle cx="900" cy="245" r="245" fill="none" stroke="'+p.accent+'" stroke-width="3" opacity=".8"/><circle cx="900" cy="245" r="185" fill="none" stroke="#ffffff" stroke-width="1.5" opacity=".25"/><ellipse cx="900" cy="245" rx="90" ry="245" fill="none" stroke="#ffffff" stroke-width="1.5" opacity=".25"/><path d="M655 245H1145M680 145H1120M680 345H1120" stroke="#ffffff" stroke-width="1.5" opacity=".22"/><path d="M0 520L1200 270V675H0Z" fill="'+p.accent+'" opacity=".24"/><rect x="72" y="78" width="12" height="94" fill="'+p.accent+'"/><text x="112" y="112" font-family="Arial,sans-serif" font-size="22" letter-spacing="7" fill="#d7dce0">ME9 · NINTH WAVE</text><text x="112" y="168" font-family="Georgia,serif" font-size="38" fill="#ffffff">Regional intelligence</text><text x="112" y="215" font-family="Arial,sans-serif" font-size="18" letter-spacing="4" fill="#e2b7ba">'+p.label+'</text><path d="M112 254H410" stroke="'+p.accent+'" stroke-width="4"/><text x="112" y="612" font-family="Arial,sans-serif" font-size="17" letter-spacing="3" fill="#ffffff" opacity=".82">ILLUSTRATIVE IMAGE · NOT A NEWS PHOTOGRAPH</text></svg>';
-  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+  const topic=String(a.topic||'').toLowerCase();
+  const known=Object.keys(topicPhotos).find(k=>k.toLowerCase()===topic);
+  if(known)return topicPhotos[known];
+  const title=String(a.title||'').toLowerCase();
+  if(/energy|oil|gas|power|ენერგ|ნავთობ/.test(title))return topicPhotos.Energy;
+  if(/econom|trade|market|business|ეკონომ|ვაჭრობ/.test(title))return topicPhotos.Economy;
+  if(/security|war|military|conflict|defence|defense|უსაფრთხო|ომი/.test(title))return topicPhotos.Security;
+  if(/technology|digital|cyber|ტექნოლოგ/.test(title))return topicPhotos.Technology;
+  if(/sport|football|სპორტ|ფეხბურთ/.test(title))return topicPhotos.Sports;
+  return generalTopicPhotos[0];
 }
 function image(a,lead=false){
   const original=String(a.image||'').trim(),fallback=fallbackImage(a),isFallback=!original,src=original||fallback;
