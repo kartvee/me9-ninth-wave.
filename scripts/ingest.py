@@ -81,7 +81,7 @@ def classify(text, source=""):
         "24.kg":"Kyrgyzstan","kaktus media":"Kyrgyzstan","kyrtag":"Kyrgyzstan",
         "kun.uz":"Uzbekistan","xabar.uz":"Uzbekistan","uzdaily":"Uzbekistan",
         "turkmen.news":"Turkmenistan","turan":"Azerbaijan",
-        "mediazona":"Russia","taiga.info":"Russia","fortanga":"Russia",
+        "mediazona":"Russia","taiga.info":"Russia","fortanga":"Russia","ctk / czech":"Czechia","idnes":"Czechia","lidovky":"Czechia","novinky":"Czechia","blesk":"Czechia","hospodarske noviny":"Czechia","respekt":"Czechia","czech television":"Czechia","ct24":"Czechia","tv nova":"Czechia","cnn prima":"Czechia","czech radio":"Czechia","czechia (google news":"Czechia",
         "ctk / czech":"Czechia","idnes":"Czechia","lidovky":"Czechia","novinky":"Czechia","blesk":"Czechia","hospodarske noviny":"Czechia","respekt":"Czechia","czech television":"Czechia","ct24":"Czechia","tv nova":"Czechia","cnn prima":"Czechia","czech radio":"Czechia","czechia (google news":"Czechia"
     }
     country=next((c for c,terms in COUNTRIES.items() if any(t in low for t in terms)),None)
