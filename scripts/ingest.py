@@ -50,8 +50,21 @@ FEEDS=[
 # Russia / Eastern Europe
 ("Mediazona","https://zona.media/rss"),
 ("Taiga.info (Google News feed)","https://news.google.com/rss/search?q=site%3Ataiga.info&hl=en-US&gl=RU&ceid=RU:en"),
-("Fortanga (Google News feed)","https://news.google.com/rss/search?q=site%3Afortanga.org&hl=en-US&gl=RU&ceid=RU:en")]
-COUNTRIES={"Georgia":["georgia","tbilisi","abkhazia","south ossetia"],"Armenia":["armenia","yerevan","nagorno-karabakh"],"Azerbaijan":["azerbaijan","baku","karabakh"],"Kazakhstan":["kazakhstan","astana","almaty"],"Kyrgyzstan":["kyrgyzstan","bishkek"],"Tajikistan":["tajikistan","dushanbe"],"Turkmenistan":["turkmenistan","ashgabat"],"Uzbekistan":["uzbekistan","tashkent"],"Russia":["russia","moscow","kremlin","siberia","chechnya"],"Ukraine":["ukraine","kyiv","kiev"],"World":["united states","china","european union","united nations"]}
+("Fortanga (Google News feed)","https://news.google.com/rss/search?q=site%3Afortanga.org&hl=en-US&gl=RU&ceid=RU:en"),
+# Czechia: established press, public broadcaster, radio and national news agency.
+("CTK / Czech News Agency","https://news.google.com/rss/search?q=site%3Aceskenoviny.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("iDNES / Mlada Fronta Dnes","https://news.google.com/rss/search?q=site%3Aidnes.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("Lidovky / Lidove Noviny","https://news.google.com/rss/search?q=site%3Alidovky.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("Novinky / Pravo","https://news.google.com/rss/search?q=site%3Anovinky.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("Blesk","https://news.google.com/rss/search?q=site%3Ablesk.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("Hospodarske noviny","https://news.google.com/rss/search?q=site%3Ahn.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("Respekt","https://news.google.com/rss/search?q=site%3Arespekt.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("Czech Television / CT24","https://news.google.com/rss/search?q=site%3Act24.ceskatelevize.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("TV Nova","https://news.google.com/rss/search?q=site%3Atn.nova.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("CNN Prima News","https://news.google.com/rss/search?q=site%3Acnn.iprima.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("Czech Radio / Radio Prague International","https://news.google.com/rss/search?q=site%3Aenglish.radio.cz+OR+site%3Airozhlas.cz&hl=en-US&gl=CZ&ceid=CZ:en"),
+("Czechia (Google News discovery feed)","https://news.google.com/rss/search?q=Czechia+OR+Prague+OR+Czech+government&hl=en-US&gl=CZ&ceid=CZ:en")]
+COUNTRIES={"Georgia":["georgia","tbilisi","abkhazia","south ossetia"],"Armenia":["armenia","yerevan","nagorno-karabakh"],"Azerbaijan":["azerbaijan","baku","karabakh"],"Kazakhstan":["kazakhstan","astana","almaty"],"Kyrgyzstan":["kyrgyzstan","bishkek"],"Tajikistan":["tajikistan","dushanbe"],"Turkmenistan":["turkmenistan","ashgabat"],"Uzbekistan":["uzbekistan","tashkent"],"Russia":["russia","moscow","kremlin","siberia","chechnya"],"Ukraine":["ukraine","kyiv","kiev"],"Czechia":["czechia","czech republic","prague","praha","brno","ostrava","česko","česká republika"],"World":["united states","china","european union","united nations"]}
 TOPICS={"Security":["security","military","war","defence","defense","border","attack","army","conflict"],"Diplomacy":["diplomacy","minister","summit","agreement","ambassador","talks","foreign affairs"],"Economy":["economy","trade","inflation","gdp","business","market","finance"],"Energy":["energy","oil","gas","pipeline","electricity","nuclear"],"Sports":["football","sport","championship","olympic"],"Technology":["technology","cyber","artificial intelligence","digital"],"Society":["protest","rights","education","society","school"],"Politics":["politic","parliament","president","government","election","vote"]}
 def clean(s):
     return re.sub(r"\\s+"," ",unescape(re.sub(r"<[^>]+>"," ",s or ""))).strip()
@@ -68,7 +81,8 @@ def classify(text, source=""):
         "24.kg":"Kyrgyzstan","kaktus media":"Kyrgyzstan","kyrtag":"Kyrgyzstan",
         "kun.uz":"Uzbekistan","xabar.uz":"Uzbekistan","uzdaily":"Uzbekistan",
         "turkmen.news":"Turkmenistan","turan":"Azerbaijan",
-        "mediazona":"Russia","taiga.info":"Russia","fortanga":"Russia"
+        "mediazona":"Russia","taiga.info":"Russia","fortanga":"Russia",
+        "ctk / czech":"Czechia","idnes":"Czechia","lidovky":"Czechia","novinky":"Czechia","blesk":"Czechia","hospodarske noviny":"Czechia","respekt":"Czechia","czech television":"Czechia","ct24":"Czechia","tv nova":"Czechia","cnn prima":"Czechia","czech radio":"Czechia","czechia (google news":"Czechia"
     }
     country=next((c for c,terms in COUNTRIES.items() if any(t in low for t in terms)),None)
     if not country:
