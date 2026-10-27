@@ -487,3 +487,40 @@ footer .footer-brand small,footer .footer>span{color:#ccc!important}
  .sidebar{grid-template-columns:1fr}
  .world{padding:20px!important}
 }
+
+
+/* Final contrast pass: remove leftover blue palette and ensure readable text on light surfaces */
+:root{
+ --accent:#d71920!important;
+ --blue:#d71920!important;
+ --navy:#171717!important;
+}
+body,html{background:#fff!important;color:#171717!important}
+a{color:#b5121b}
+.nav,.masthead,.nav .wrap{background:#fff!important}
+.nav a,.nav-lang,.mast-right{color:#262626!important}
+.nav a:hover,.nav a.active{color:#d71920!important}
+.lang-btn{background:#fff!important;color:#333!important;border-color:#c8c8c8!important}
+.lang-btn.active,.lang-btn:hover{background:#d71920!important;color:#fff!important;border-color:#d71920!important}
+.lead h3,.card h3,.section-head h2,.side-block h3,.map-info h3,.world h2{color:#171717!important}
+.lead p,.card p,.side-intro,.desk-note p,.priority-list span,.source-disclaimer{color:#444!important}
+.lead .meta,.card .meta,.section-head>span,.mast-right{color:#666!important}
+.lead .label,.card .label,.kicker,.side-block .kicker{color:#c51620!important}
+.lead a.read-link,.read-link{background:#d71920!important;color:#fff!important}
+.card a.read-link{background:transparent!important;color:#b5121b!important}
+.side-block,.desk-note{background:#f5f5f5!important;color:#222!important;border-color:#d71920!important}
+.region-btn,.region-btn span,.region-btn b{color:#333!important}
+.region-btn:hover,.region-btn.selected{background:#eee!important;color:#111!important}
+.region-btn span,.region-btn b{color:#c51620!important}
+.sidebar-search,.compare-controls select,.section-head select,select,input[type=search]{
+ background:#fff!important;color:#222!important;border-color:#bbb!important;
+}
+.sidebar-search::placeholder,input::placeholder{color:#666!important;opacity:1}
+.more,.outline-btn{background:#fff!important;color:#222!important;border-color:#333!important}
+.more:hover,.outline-btn:hover{background:#d71920!important;color:#fff!important;border-color:#d71920!important}
+.map-panel,.map-info,.timeline-item,.compare-card,.compare-grid{background:#fff!important;color:#222!important;border-color:#ddd!important}
+.world{background:#f4f4f4!important;color:#222!important}
+.priority-list span,.sources span{background:#fff!important;color:#333!important;border-color:#ddd!important}
+footer{background:#171717!important;color:#fff!important}
+footer .footer-brand small,footer .footer>span{color:#e5e5e5!important}
+footer a{color:#fff!important}
