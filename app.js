@@ -57,41 +57,17 @@ function applyLanguage(){
 
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function date(s){const d=new Date(s);return s&&!isNaN(d)?d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC':'Time unavailable'}
-const topicPhotos={
-  Security:'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=80',
-  Diplomacy:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80',
-  Economy:'https://images.unsplash.com/photo-1460925895917-afdad827c52f?auto=format&fit=crop&w=1200&q=80',
-  Energy:'https://images.unsplash.com/photo-1473341304170-971499b5ac7e?auto=format&fit=crop&w=1200&q=80',
-  Sports:'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80',
-  Technology:'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
-  Society:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80',
-  Politics:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80'
-};
-const generalTopicPhotos=[
- 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
- 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80'
-];
-function fallbackImage(a){
-  const topic=String(a.topic||'').toLowerCase();
-  const known=Object.keys(topicPhotos).find(k=>k.toLowerCase()===topic);
-  if(known)return topicPhotos[known];
-  const title=String(a.title||'').toLowerCase();
-  if(/energy|oil|gas|power|ენერგ|ნავთობ/.test(title))return topicPhotos.Energy;
-  if(/econom|trade|market|business|ეკონომ|ვაჭრობ/.test(title))return topicPhotos.Economy;
-  if(/security|war|military|conflict|defence|defense|უსაფრთხო|ომი/.test(title))return topicPhotos.Security;
-  if(/technology|digital|cyber|ტექნოლოგ/.test(title))return topicPhotos.Technology;
-  if(/sport|football|სპორტ|ფეხბურთ/.test(title))return topicPhotos.Sports;
-  return generalTopicPhotos[0];
-}
 function imageError(img){
-  const stage=Number(img.dataset.imageStage||0);
-  if(stage===0){img.dataset.imageStage='1';img.src=img.dataset.topicFallback;return}
-  if(stage===1){img.dataset.imageStage='2';img.src=generalTopicPhotos[0];return}
   img.parentElement.classList.add('image-unavailable');
+  img.remove();
 }
 function image(a,lead=false){
-  const original=String(a.image||'').trim(),fallback=fallbackImage(a),src=original||fallback;
-  return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+'"><img class="'+(lead?'lead-image':'card-image')+'" src="'+esc(src)+'" data-topic-fallback="'+esc(fallback)+'" data-image-stage="'+(original?'0':'1')+'" alt="'+esc(a.title)+'" loading="lazy" referrerpolicy="no-referrer" onerror="imageError(this)"><span class="image-note" '+(original?'hidden':'')+'>TOPIC PHOTO</span></div>'
+  const src=String(a.image||'').trim();
+  if(!src)return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+' image-unavailable"><div class="no-photo">PHOTO UNAVAILABLE</div></div>';
+  const credit=a.image_source==='Openverse'
+    ? '<div class="image-credit">Photo: '+esc(a.image_credit||'Unknown creator')+' · '+esc(a.image_license||'Open licence')+(a.image_page? ' · <a href="'+esc(a.image_page)+'" target="_blank" rel="noopener noreferrer">Source</a>':'')+'</div>'
+    : '';
+  return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+'"><img class="'+(lead?'lead-image':'card-image')+'" src="'+esc(src)+'" alt="'+esc(a.title)+'" loading="lazy" referrerpolicy="no-referrer" onerror="imageError(this)">'+credit+'</div>'
 }
 function summary(a){return a.summary_en||a.summary||'Open the publisher for full context.'}
 function card(a){return '<article class="card">'+image(a)+'<div class="card-copy"><div class="label">'+esc(a.country)+' / '+esc(a.topic)+' · '+esc(a.source)+'</div><h3>'+esc(a.title)+'</h3>'+(a.translated_title?'<p class="translation">English title: '+esc(a.translated_title)+'</p>':'')+'<p>'+esc(summary(a))+'</p><div class="meta">'+date(a.published_at)+' · '+esc(a.summary_type==='ai_summary'?'ME9 AI summary':'Publisher excerpt')+'</div><a class="read-link" href="'+esc(a.url)+'" target="_blank" rel="noopener noreferrer">Read original report ↗</a></div></article>'}
