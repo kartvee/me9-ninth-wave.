@@ -550,3 +550,11 @@ footer a{color:#fff!important}
 .brand-wordmark small{font:600 10px/1.3 Arial,sans-serif;letter-spacing:.12em;color:#555}
 .footer-wordmark{font:700 23px/1.1 Georgia,'Times New Roman',serif;color:#fff;display:block}
 .footer-brand img{display:none!important}
+
+
+/* Article-specific open-licensed photo attribution and honest no-photo state */
+.image-frame{position:relative;overflow:hidden;background:#ececec}
+.image-frame.image-unavailable{display:flex;align-items:center;justify-content:center;min-height:180px;background:#f0f0f0;border:1px solid #ddd}
+.image-frame .no-photo{padding:24px;text-align:center;color:#777;font:600 11px/1.4 Arial,sans-serif;letter-spacing:.12em}
+.image-credit{padding:5px 8px;background:#f7f7f7;color:#555;font:10px/1.4 Arial,sans-serif;overflow-wrap:anywhere}
+.image-credit a{color:#a91620;text-decoration:underline}
