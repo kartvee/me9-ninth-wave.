@@ -1,4 +1,6 @@
 import json, re, hashlib, urllib.request, urllib.error, xml.etree.ElementTree as ET, os
+from langdetect import detect, DetectorFactory, LangDetectException
+DetectorFactory.seed = 0
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote, urljoin, urlparse
@@ -162,30 +164,31 @@ def page_og_image(article):
     except Exception as e:
         return None
 
-def translate_to_english(text):
-    """Translate non-English feed text to English using Google's public translation endpoint."""
-    if not text:return text, "en"
-    url="https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q="+quote(text[:1200])
-    req=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0 ME9-NewsMonitor/1.2"})
+def detect_language(text):
+    """Detect source language without translating it."""
+    text = clean(text)
+    if not text:
+        return "unknown"
+    if re.search(r"[\\u10A0-\\u10FF]", text):
+        return "ka"
+    letters = re.findall(r"[A-Za-z\\u0400-\\u04FF]", text)
+    if len(letters) < 12:
+        return "unknown"
     try:
-        with urllib.request.urlopen(req,timeout=5) as res:data=json.loads(res.read())
-        translated="".join(part[0] for part in data[0] if part and part[0])
-        detected=(data[2] or "en").lower() if len(data)>2 else "en"
-        return clean(translated) or text, detected
-    except Exception as e:
-        print("Translation unavailable:",str(e)[:100])
-        return text, "unknown"
+        return detect(text)
+    except LangDetectException:
+        return "unknown"
 
 def ai_enrich(title,excerpt):
     key=os.environ.get("ME9_OPENAI_API_KEY")
     if not key:return None
-    payload={"model":"gpt-4.1-mini","input":[{"role":"system","content":"You are a careful news editor. Return JSON only with keys summary_en and translated_title. Write a factual English summary of at most 2 sentences based only on the supplied headline and excerpt. If headline is already English, translated_title must be an empty string. If it is another language, translate the headline to English. Never add facts."},{"role":"user","content":json.dumps({"headline":title,"publisher_excerpt":excerpt},ensure_ascii=False)}],"text":{"format":{"type":"json_object"}}}
+    payload={"model":"gpt-4.1-mini","input":[{"role":"system","content":"You are a careful news editor. Return JSON only with key summary_en. Write a factual English summary of at most 2 sentences based only on the supplied English headline and excerpt. Do not translate the headline. Never add facts."},{"role":"user","content":json.dumps({"headline":title,"publisher_excerpt":excerpt},ensure_ascii=False)}],"text":{"format":{"type":"json_object"}}}
     req=urllib.request.Request("https://api.openai.com/v1/responses",data=json.dumps(payload).encode(),headers={"Authorization":"Bearer "+key,"Content-Type":"application/json"},method="POST")
     try:
         with urllib.request.urlopen(req,timeout=25) as res:body=json.loads(res.read())
         txt="".join(part.get("text","") for item in body.get("output",[]) for part in item.get("content",[]) if part.get("type")=="output_text")
         obj=json.loads(txt)
-        return {"summary_en":clean(obj.get("summary_en",""))[:650],"translated_title":clean(obj.get("translated_title",""))[:240],"summary_type":"ai_summary"} if obj.get("summary_en") else None
+        return {"summary_en":clean(obj.get("summary_en",""))[:650],"summary_type":"ai_summary"} if obj.get("summary_en") else None
     except Exception as e:
         print("AI enrichment unavailable:",str(e)[:150]);return None
 items=[];seen=set();feed_ok=0
@@ -207,20 +210,19 @@ for source,url in FEEDS:
             key=hashlib.sha256(re.sub(r"[^a-z0-9]","",title.lower()).encode()).hexdigest()
             if key in seen:continue
             seen.add(key);country,topic=classify(title+" "+excerpt,source)
-            # Keep Georgian headlines in Georgian and add their English translation.
-            # For all other non-English headlines, publish the English translation only.
-            translated_title=""
-            title_en, detected=translate_to_english(title)
-            summary_en=""
-            if detected == "ka":
-                translated_title=title_en if title_en.lower()!=title.lower() else ""
-            elif detected not in ("en","unknown"):
-                title=title_en
-            if detected not in ("en","unknown"):
-                summary_en, _=translate_to_english(excerpt)
-            article={"id":key[:16],"title":title,"summary":excerpt if detected in ("en","ka","unknown") else summary_en,"summary_en":summary_en,"translated_title":translated_title,"source":source,"url":link,"image":image_url(node),"published_at":parse_date(pub),"country":country,"topic":topic,"summary_type":"publisher_excerpt","automated":True,"language":"ka" if detected=="ka" else "en"}
-            enriched=ai_enrich(title,excerpt)
-            if enriched:article.update(enriched)
+            # Keep only stories whose headline and available excerpt are Georgian or English.
+            # No translation is performed for other source languages.
+            title_language=detect_language(title)
+            excerpt_language=detect_language(excerpt) if excerpt else title_language
+            if title_language not in ("ka","en") or excerpt_language not in ("ka","en"):
+                continue
+            language="ka" if title_language=="ka" else "en"
+            if excerpt and excerpt_language != language:
+                continue
+            article={"id":key[:16],"title":title,"summary":excerpt,"summary_en":"","translated_title":"","source":source,"url":link,"image":image_url(node),"published_at":parse_date(pub),"country":country,"topic":topic,"summary_type":"publisher_excerpt","automated":True,"language":language}
+            if language=="en":
+                enriched=ai_enrich(title,excerpt)
+                if enriched:article.update(enriched)
             items.append(article)
     except Exception as e:print("Feed failed:",source,str(e)[:200])
 items.sort(key=lambda x:x["published_at"],reverse=True)
