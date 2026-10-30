@@ -169,9 +169,9 @@ def detect_language(text):
     text = clean(text)
     if not text:
         return "unknown"
-    if re.search(r"[\\u10A0-\\u10FF]", text):
+    if re.search("[ა-ჰ]", text):
         return "ka"
-    letters = re.findall(r"[A-Za-z\\u0400-\\u04FF]", text)
+    letters = re.findall("[A-Za-zА-Яа-я]", text)
     if len(letters) < 12:
         return "unknown"
     try:
