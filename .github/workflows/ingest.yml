@@ -44,9 +44,13 @@ jobs:
             if ! git rebase origin/main; then
               # Both the workflow run and another recent run may update the feed.
               # Keep this run's freshly generated feed when that file conflicts.
-              if git status --short | grep -q 'data/news.json'; then
-                git checkout --theirs data/news.json
-                git add data/news.json
+              if git status --short | grep -Eq 'data/(news.json|image_cache.json)'; then
+                for file in data/news.json data/image_cache.json; do
+                  if git status --short -- "$file" | grep -q .; then
+                    git checkout --theirs -- "$file"
+                    git add "$file"
+                  fi
+                done
                 GIT_EDITOR=true git -c core.editor=true rebase --continue
               else
                 git rebase --abort
