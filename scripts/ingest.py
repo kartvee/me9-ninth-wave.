@@ -3,7 +3,7 @@ from langdetect import detect, DetectorFactory, LangDetectException
 DetectorFactory.seed = 0
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from urllib.parse import quote, urljoin, urlparse
+from urllib.parse import quote, urljoin, urlparse, urlencode
 from concurrent.futures import ThreadPoolExecutor
 from html import unescape
 FEEDS=[
@@ -226,19 +226,75 @@ for source,url in FEEDS:
             items.append(article)
     except Exception as e:print("Feed failed:",source,str(e)[:200])
 items.sort(key=lambda x:x["published_at"],reverse=True)
-# Publisher pages often expose a much larger featured image than their RSS thumbnail.
-# Check only the most recent 36 stories in parallel to keep the scheduled ingestion bounded.
-image_candidates = [item for item in items[:36] if item.get("url")]
+# Prefer publisher-provided photos. Only search open-license repositories when no publisher image exists.
+image_candidates = [item for item in items[:60] if item.get("url")]
 with ThreadPoolExecutor(max_workers=8) as pool:
-    futures = {pool.submit(page_og_image, item): item for item in image_candidates}
+    futures = {pool.submit(page_og_image, item): item for item in image_candidates if not item.get("image")}
     for future, item in list(futures.items()):
         try:
-            better_image = future.result(timeout=6)
+            better_image = future.result(timeout=7)
             if better_image:
                 item["image"] = better_image
         except Exception:
             pass
-out={"status":"live" if items else "demo","updated_at":datetime.now(timezone.utc).isoformat(),"source_count":len(FEEDS),"active_source_count":feed_ok,"ai_enabled":bool(os.environ.get("ME9_OPENAI_API_KEY")),"articles":items}
+
 os.makedirs("data",exist_ok=True)
+cache_path="data/image_cache.json"
+try:
+    with open(cache_path,"r",encoding="utf-8") as f:image_cache=json.load(f)
+    if not isinstance(image_cache,dict):image_cache={}
+except (OSError,ValueError):
+    image_cache={}
+def image_terms(article):
+    text=" ".join([article.get("title",""),article.get("summary",""),article.get("country",""),article.get("topic","")])
+    words=re.findall(r"[a-zA-Z][a-zA-Z'-]{2,}",text.lower())
+    stop={"with","from","that","this","after","before","over","under","into","about","says","said","will","have","has","their","they","them","its","for","and","the","are","was","were","has","had","but","not","new","latest","report","reports","news","official","officials"}
+    return list(dict.fromkeys(w for w in words if w not in stop))[:10]
+def openverse_photo(article):
+    terms=image_terms(article)
+    if not terms:return None
+    query=" ".join(terms[:7])
+    params={"q":query,"license":"cc0,pdm,by,by-sa","license_type":"commercial","category":"photograph","aspect_ratio":"wide","size":"medium","page_size":20,"filter_dead":"true"}
+    endpoint="https://api.openverse.org/v1/images/?" + urlencode(params)
+    req=urllib.request.Request(endpoint,headers={"User-Agent":"ME9-NewsMonitor/1.0 (open-license editorial image search)"})
+    try:
+        with urllib.request.urlopen(req,timeout=12) as response:data=json.loads(response.read())
+    except Exception as e:
+        print("Openverse search unavailable:",str(e)[:120]);return None
+    article_words=set(terms)
+    ranked=[]
+    for result in data.get("results",[]):
+        image_url=result.get("url","")
+        if not image_url.startswith("https://"):continue
+        license_code=(result.get("license") or "").lower()
+        if license_code not in ("cc0","pdm","by","by-sa"):continue
+        title_words=set(re.findall(r"[a-zA-Z][a-zA-Z'-]{2,}",(result.get("title","")+" "+" ".join(t.get("name","") for t in result.get("tags",[]))).lower()))
+        overlap=article_words & title_words
+        if not overlap:continue
+        score=len(overlap)*3 + (2 if result.get("category")=="photograph" else 0) + (1 if result.get("width",0)>=1000 else 0)
+        ranked.append((score,result))
+    if not ranked:return None
+    ranked.sort(key=lambda pair:pair[0],reverse=True)
+    result=ranked[0][1]
+    return {"image":result["url"],"image_source":"Openverse","image_page":result.get("foreign_landing_url") or result.get("detail_url",""),"image_credit":result.get("creator") or "Unknown creator","image_creator_url":result.get("creator_url",""),"image_license":(result.get("license") or "").upper()+(" "+str(result.get("license_version")) if result.get("license_version") else ""),"image_license_url":result.get("license_url",""),"image_attribution":result.get("attribution","")}
+# Search a bounded batch on each scheduled run and persist both hits and misses.
+# Subsequent five-minute runs continue through the backlog without repeating searches.
+new_searches=0
+for article in items:
+    if article.get("image"):continue
+    cached=image_cache.get(article["id"])
+    if cached:
+        if cached.get("image"):
+            article.update({k:v for k,v in cached.items() if k!="checked_at"})
+        continue
+    if new_searches>=24:continue
+    photo=openverse_photo(article)
+    image_cache[article["id"]]={"checked_at":datetime.now(timezone.utc).isoformat(),**(photo or {})}
+    if photo:article.update(photo)
+    new_searches+=1
+    import time
+    time.sleep(0.35)
+with open(cache_path,"w",encoding="utf-8") as f:json.dump(image_cache,f,ensure_ascii=False,indent=2)
+out={"status":"live" if items else "demo","updated_at":datetime.now(timezone.utc).isoformat(),"source_count":len(FEEDS),"active_source_count":feed_ok,"ai_enabled":bool(os.environ.get("ME9_OPENAI_API_KEY")),"openverse_searches_this_run":new_searches,"openverse_cached_images":sum(1 for v in image_cache.values() if v.get("image")),"articles":items}
 with open("data/news.json","w",encoding="utf-8") as f:json.dump(out,f,ensure_ascii=False,indent=2)
-print("Collected",len(out["articles"]),"articles;",feed_ok,"feeds responded; AI enrichment",out["ai_enabled"])
+print("Collected",len(out["articles"]),"articles;",feed_ok,"feeds responded;",new_searches,"Openverse searches;",out["openverse_cached_images"],"cached open-license photos; AI enrichment",out["ai_enabled"])
