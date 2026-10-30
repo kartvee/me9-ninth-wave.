@@ -65,7 +65,7 @@ function image(a,lead=false){
   const src=String(a.image||'').trim();
   if(!src)return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+' image-unavailable"><div class="no-photo">PHOTO UNAVAILABLE</div></div>';
   const credit=a.image_source==='Openverse'
-    ? '<div class="image-credit">Photo: '+esc(a.image_credit||'Unknown creator')+' · '+esc(a.image_license||'Open licence')+(a.image_page? ' · <a href="'+esc(a.image_page)+'" target="_blank" rel="noopener noreferrer">Source</a>':'')+'</div>'
+    ? '<div class="image-credit">Photo: '+(a.image_creator_url?'<a href="'+esc(a.image_creator_url)+'" target="_blank" rel="noopener noreferrer">'+esc(a.image_credit||'Unknown creator')+'</a>':esc(a.image_credit||'Unknown creator'))+' · '+(a.image_license_url?'<a href="'+esc(a.image_license_url)+'" target="_blank" rel="noopener noreferrer">'+esc(a.image_license||'Open licence')+'</a>':esc(a.image_license||'Open licence'))+(a.image_page? ' · <a href="'+esc(a.image_page)+'" target="_blank" rel="noopener noreferrer">Source</a>':'')+'</div>'
     : '';
   return '<div class="image-frame '+(lead?'lead-frame':'card-frame')+'"><img class="'+(lead?'lead-image':'card-image')+'" src="'+esc(src)+'" alt="'+esc(a.title)+'" loading="lazy" referrerpolicy="no-referrer" onerror="imageError(this)">'+credit+'</div>'
 }
