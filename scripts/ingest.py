@@ -248,48 +248,116 @@ except (OSError,ValueError):
 def image_terms(article):
     text=" ".join([article.get("title",""),article.get("summary",""),article.get("country",""),article.get("topic","")])
     words=re.findall(r"[a-zA-Z][a-zA-Z'-]{2,}",text.lower())
-    stop={"with","from","that","this","after","before","over","under","into","about","says","said","will","have","has","their","they","them","its","for","and","the","are","was","were","has","had","but","not","new","latest","report","reports","news","official","officials"}
-    return list(dict.fromkeys(w for w in words if w not in stop))[:10]
+    stop={"with","from","that","this","after","before","over","under","into","about","says","said","will","have","has","their","they","them","its","for","and","the","are","was","were","had","but","not","new","latest","report","reports","news","official","officials","according","amid","during","following","could","would","also","more","than","been","being","which","while","where","when","what","who","how","why"}
+    return list(dict.fromkeys(w for w in words if w not in stop))[:12]
+
+COUNTRY_SEARCH_TERMS={
+ "Georgia":"Georgia Tbilisi Caucasus","Armenia":"Armenia Yerevan","Azerbaijan":"Azerbaijan Baku",
+ "Kazakhstan":"Kazakhstan Astana","Kyrgyzstan":"Kyrgyzstan Bishkek","Tajikistan":"Tajikistan Dushanbe",
+ "Turkmenistan":"Turkmenistan Ashgabat","Uzbekistan":"Uzbekistan Tashkent","Russia":"Russia Moscow",
+ "Ukraine":"Ukraine Kyiv","Czechia":"Czech Republic Prague","World":"international"
+}
+TOPIC_SEARCH_TERMS={
+ "Security":"military security conflict","Diplomacy":"diplomacy government meeting",
+ "Economy":"economy business trade","Energy":"energy oil gas","Sports":"sports competition",
+ "Technology":"technology innovation","Society":"people community","Politics":"politics parliament government"
+}
+def article_search_queries(article):
+    terms=image_terms(article)
+    queries=[]
+    if terms:
+        queries.append(" ".join(terms[:6]))
+        if len(terms)>2:queries.append(" ".join(terms[:3]))
+        # A short entity-focused search often performs better than a long headline/excerpt.
+        queries.append(" ".join(terms[:2]))
+    country=article.get("country","")
+    topic=article.get("topic","")
+    contextual=" ".join([COUNTRY_SEARCH_TERMS.get(country,""),TOPIC_SEARCH_TERMS.get(topic,"")]).strip()
+    if contextual:queries.append(contextual)
+    return list(dict.fromkeys(q for q in queries if q))
+
+def rank_open_image(result,terms):
+    if not result.get("url","").startswith("https://"):return None
+    license_code=(result.get("license") or "").lower()
+    if license_code not in ("cc0","pdm","by","by-sa"):return None
+    tags=" ".join(t.get("name","") for t in result.get("tags",[]))
+    result_words=set(re.findall(r"[a-zA-Z][a-zA-Z'-]{2,}",(result.get("title","")+" "+tags).lower()))
+    overlap=set(terms)&result_words
+    if not overlap:return None
+    # Require actual semantic keyword overlap; do not accept a country/topic-only generic match.
+    score=len(overlap)*4+(2 if result.get("category")=="photograph" else 0)+(1 if result.get("width",0)>=1000 else 0)
+    return score
+
 def openverse_photo(article):
     terms=image_terms(article)
-    if not terms:return None
-    query=" ".join(terms[:7])
-    params={"q":query,"license":"cc0,pdm,by,by-sa","license_type":"commercial","category":"photograph","aspect_ratio":"wide","size":"medium","page_size":20,"filter_dead":"true"}
-    endpoint="https://api.openverse.org/v1/images/?" + urlencode(params)
-    req=urllib.request.Request(endpoint,headers={"User-Agent":"ME9-NewsMonitor/1.0 (open-license editorial image search)"})
-    try:
-        with urllib.request.urlopen(req,timeout=12) as response:data=json.loads(response.read())
-    except Exception as e:
-        print("Openverse search unavailable:",str(e)[:120]);return None
-    article_words=set(terms)
-    ranked=[]
-    for result in data.get("results",[]):
-        image_url=result.get("url","")
-        if not image_url.startswith("https://"):continue
-        license_code=(result.get("license") or "").lower()
-        if license_code not in ("cc0","pdm","by","by-sa"):continue
-        title_words=set(re.findall(r"[a-zA-Z][a-zA-Z'-]{2,}",(result.get("title","")+" "+" ".join(t.get("name","") for t in result.get("tags",[]))).lower()))
-        overlap=article_words & title_words
-        if not overlap:continue
-        score=len(overlap)*3 + (2 if result.get("category")=="photograph" else 0) + (1 if result.get("width",0)>=1000 else 0)
-        ranked.append((score,result))
-    if not ranked:return None
-    ranked.sort(key=lambda pair:pair[0],reverse=True)
-    result=ranked[0][1]
-    return {"image":result["url"],"image_source":"Openverse","image_page":result.get("foreign_landing_url") or result.get("detail_url",""),"image_credit":result.get("creator") or "Unknown creator","image_creator_url":result.get("creator_url",""),"image_license":(result.get("license") or "").upper()+(" "+str(result.get("license_version")) if result.get("license_version") else ""),"image_license_url":result.get("license_url",""),"image_attribution":result.get("attribution","")}
-# Search a bounded batch on each scheduled run and persist both hits and misses.
-# Subsequent five-minute runs continue through the backlog without repeating searches.
+    for query in article_search_queries(article):
+        params={"q":query,"license":"cc0,pdm,by,by-sa","license_type":"commercial","category":"photograph","aspect_ratio":"wide","size":"medium","page_size":30,"filter_dead":"true"}
+        endpoint="https://api.openverse.org/v1/images/?" + urlencode(params)
+        req=urllib.request.Request(endpoint,headers={"User-Agent":"ME9-NewsMonitor/1.1 (open-license editorial image search)"})
+        try:
+            with urllib.request.urlopen(req,timeout=12) as response:data=json.loads(response.read())
+        except Exception as e:
+            print("Openverse search unavailable:",str(e)[:120]);continue
+        ranked=[]
+        for result in data.get("results",[]):
+            score=rank_open_image(result,terms)
+            if score is not None:ranked.append((score,result))
+        if ranked:
+            ranked.sort(key=lambda pair:pair[0],reverse=True)
+            result=ranked[0][1]
+            return {"image":result["url"],"image_source":"Openverse","image_page":result.get("foreign_landing_url") or result.get("detail_url",""),"image_credit":result.get("creator") or "Unknown creator","image_creator_url":result.get("creator_url",""),"image_license":(result.get("license") or "").upper()+(" "+str(result.get("license_version")) if result.get("license_version") else ""),"image_license_url":result.get("license_url",""),"image_attribution":result.get("attribution","")}
+    return None
+
+def commons_photo(article):
+    terms=image_terms(article)
+    for query in article_search_queries(article):
+        params={"action":"query","format":"json","generator":"search","gsrsearch":"filetype:bitmap "+query,"gsrnamespace":6,"gsrlimit":30,"prop":"imageinfo","iiprop":"url|extmetadata","iiurlwidth":1200}
+        endpoint="https://commons.wikimedia.org/w/api.php?"+urlencode(params)
+        req=urllib.request.Request(endpoint,headers={"User-Agent":"ME9-NewsMonitor/1.1 (ME9 editorial image finder; contact site owner)"})
+        try:
+            with urllib.request.urlopen(req,timeout=12) as response:data=json.loads(response.read())
+        except Exception as e:
+            print("Wikimedia Commons search unavailable:",str(e)[:120]);continue
+        ranked=[]
+        for page in data.get("query",{}).get("pages",{}).values():
+            info=(page.get("imageinfo") or [{}])[0]
+            meta=info.get("extmetadata",{})
+            license_name=clean(meta.get("LicenseShortName",{}).get("value",""))
+            license_lower=license_name.lower()
+            if not any(x in license_lower for x in ("cc0","public domain","cc by","cc by-sa")):continue
+            if any(x in license_lower for x in ("noncommercial","no derivatives","nc-","nd-")):continue
+            candidate_url=info.get("thumburl") or info.get("url","")
+            if not candidate_url.startswith("https://"):continue
+            title_words=set(re.findall(r"[a-zA-Z][a-zA-Z'-]{2,}",(page.get("title","")+" "+clean(meta.get("ImageDescription",{}).get("value",""))).lower()))
+            overlap=set(terms)&title_words
+            if not overlap:continue
+            score=len(overlap)*4+(1 if info.get("thumburl") else 0)
+            ranked.append((score,page,info,meta,candidate_url))
+        if ranked:
+            ranked.sort(key=lambda item:item[0],reverse=True)
+            _,page,info,meta,candidate_url=ranked[0]
+            return {"image":candidate_url,"image_source":"Wikimedia Commons","image_page":info.get("descriptionurl",""),"image_credit":clean(meta.get("Artist",{}).get("value","")) or "Unknown creator","image_creator_url":"","image_license":clean(meta.get("LicenseShortName",{}).get("value","Open licence")),"image_license_url":clean(meta.get("LicenseUrl",{}).get("value","")),"image_attribution":clean(meta.get("Credit",{}).get("value",""))}
+    return None
+
+# Revisit earlier misses after seven days. New stories are prioritised; only 24
+# articles are searched per run so the five-minute ingestion remains bounded.
 new_searches=0
+now=datetime.now(timezone.utc)
 for article in items:
     if article.get("image"):continue
     cached=image_cache.get(article["id"])
-    if cached:
-        if cached.get("image"):
-            article.update({k:v for k,v in cached.items() if k!="checked_at"})
+    if cached and cached.get("image"):
+        article.update({k:v for k,v in cached.items() if k!="checked_at"})
         continue
+    if cached and cached.get("checked_at"):
+        try:
+            checked=datetime.fromisoformat(cached["checked_at"].replace("Z","+00:00"))
+            if (now-checked).total_seconds()<7*86400:continue
+        except Exception:pass
     if new_searches>=24:continue
     photo=openverse_photo(article)
-    image_cache[article["id"]]={"checked_at":datetime.now(timezone.utc).isoformat(),**(photo or {})}
+    if not photo:photo=commons_photo(article)
+    image_cache[article["id"]]={"checked_at":now.isoformat(),**(photo or {})}
     if photo:article.update(photo)
     new_searches+=1
     import time
