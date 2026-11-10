@@ -262,19 +262,32 @@ TOPIC_SEARCH_TERMS={
  "Economy":"economy business trade","Energy":"energy oil gas","Sports":"sports competition",
  "Technology":"technology innovation","Society":"people community","Politics":"politics parliament government"
 }
+# English equivalents allow relevant open-photo searches even when the article headline is Georgian.
+TOPIC_IMAGE_TERMS={
+ "Security":"soldiers military border police conflict","Diplomacy":"diplomats officials meeting flags",
+ "Economy":"business market industry trade","Energy":"power plant oil gas energy infrastructure",
+ "Sports":"football stadium athletes sport","Technology":"technology computer science",
+ "Society":"people city school community","Politics":"parliament government election politicians"
+}
 def article_search_queries(article):
     terms=image_terms(article)
-    queries=[]
-    if terms:
-        queries.append(" ".join(terms[:6]))
-        if len(terms)>2:queries.append(" ".join(terms[:3]))
-        # A short entity-focused search often performs better than a long headline/excerpt.
-        queries.append(" ".join(terms[:2]))
     country=article.get("country","")
     topic=article.get("topic","")
-    contextual=" ".join([COUNTRY_SEARCH_TERMS.get(country,""),TOPIC_SEARCH_TERMS.get(topic,"")]).strip()
+    country_terms=COUNTRY_SEARCH_TERMS.get(country,"")
+    topic_terms=TOPIC_IMAGE_TERMS.get(topic,TOPIC_SEARCH_TERMS.get(topic,""))
+    queries=[]
+    if terms:queries.append(" ".join(terms[:5]))
+    contextual=" ".join(x for x in (country_terms,topic_terms) if x).strip()
     if contextual:queries.append(contextual)
-    return list(dict.fromkeys(q for q in queries if q))
+    # A compact country + event search often works better for Georgian-language headlines.
+    if country_terms and topic_terms:queries.append(country_terms+" news "+topic_terms.split()[0])
+    return list(dict.fromkeys(q for q in queries if q))[:2]
+
+def image_match_terms(article):
+    terms=set(image_terms(article))
+    terms.update(re.findall(r"[a-zA-Z][a-zA-Z'-]{2,}",COUNTRY_SEARCH_TERMS.get(article.get("country",""),"").lower()))
+    terms.update(re.findall(r"[a-zA-Z][a-zA-Z'-]{2,}",TOPIC_IMAGE_TERMS.get(article.get("topic",""),"").lower()))
+    return terms
 
 def rank_open_image(result,terms):
     if not result.get("url","").startswith("https://"):return None
@@ -352,9 +365,9 @@ for article in items:
     if cached and cached.get("checked_at"):
         try:
             checked=datetime.fromisoformat(cached["checked_at"].replace("Z","+00:00"))
-            if (now-checked).total_seconds()<7*86400:continue
+            if (now-checked).total_seconds()<86400:continue
         except Exception:pass
-    if new_searches>=24:continue
+    if new_searches>=36:continue
     photo=openverse_photo(article)
     if not photo:photo=commons_photo(article)
     image_cache[article["id"]]={"checked_at":now.isoformat(),**(photo or {})}
